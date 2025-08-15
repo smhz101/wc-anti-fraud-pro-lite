@@ -29,17 +29,16 @@ function wca_enqueue_admin_assets( $hook ) {
 	wp_enqueue_style( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.css', array(), WCA_PRO_LITE_ACTIVE );
 	wp_enqueue_script( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.js', array( 'jquery' ), WCA_PRO_LITE_ACTIVE, true );
 
-	// SelectWoo (WooCommerce’s Select2 fork)
-	wp_enqueue_script( 'selectWoo' );           // provided by WooCommerce
+        // SelectWoo (WooCommerce’s Select2 fork)
+        wp_enqueue_script( 'selectWoo' );           // provided by WooCommerce
 
-	// CSS — load WooCommerce's own SelectWoo styling
-	wp_enqueue_style(
-		'selectWoo',
-		// WC()->plugin_url() . '/assets/css/select2.css',
-		'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
-		array(),
-		WC_VERSION
-	);
+        // CSS — load WooCommerce's own SelectWoo styling
+        wp_enqueue_style(
+                'selectWoo',
+                WC()->plugin_url() . '/assets/css/select2.css',
+                array(),
+                WC_VERSION
+        );
 
 	// Localize presets + ajax for product search + currency
 	$presets = function_exists( 'wca_presets' ) ? wca_presets() : array();
@@ -350,23 +349,38 @@ function wca_handle_tools() {
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wca_%' OR option_name LIKE '_transient_timeout_wca_%'" );
 		wca_log_event( 'maintenance_clear', array(), 'info' );
 		add_action( 'admin_notices', 'wca_notice_tools_success' );
-	} elseif ( $tool === 'unban' ) {
-		$key = isset( $_POST['wca_key'] ) ? sanitize_text_field( $_POST['wca_key'] ) : '';
-		if ( $key ) {
-			delete_option( $key );
-			$timeout = str_replace( '_transient_', '_transient_timeout_', $key );
-			delete_option( $timeout );
-			wca_log_event( 'ban_removed', array( 'key' => $key ), 'info' );
-			add_action( 'admin_notices', 'wca_notice_unban_success' );
-		}
-	}
+        } elseif ( $tool === 'unban' ) {
+                $key = isset( $_POST['wca_key'] ) ? sanitize_text_field( $_POST['wca_key'] ) : '';
+                if ( $key ) {
+                        if ( str_starts_with( $key, '_transient_wca_ban_' ) ) {
+                                delete_option( $key );
+                                $timeout = str_replace( '_transient_', '_transient_timeout_', $key );
+                                delete_option( $timeout );
+                                wca_log_event( 'ban_removed', array( 'key' => $key ), 'info' );
+                                add_action( 'admin_notices', 'wca_notice_unban_success' );
+                        } else {
+                                add_action( 'admin_notices', 'wca_notice_unban_fail' );
+                        }
+                }
+        }
 }
 function wca_notice_tools_success() {
 	echo '<div class="notice notice-success"><p>' . esc_html__( 'Anti-fraud counters & bans cleared.', 'wc-anti-fraud-pro-lite' ) . '</p></div>';
 }
 function wca_notice_unban_success() {
-	echo '<div class="notice notice-success"><p>' . esc_html__( 'Selected IP ban removed.', 'wc-anti-fraud-pro-lite' ) . '</p></div>';
+        echo '<div class="notice notice-success"><p>' . esc_html__( 'Selected IP ban removed.', 'wc-anti-fraud-pro-lite' ) . '</p></div>';
 }
+function wca_notice_unban_fail() {
+        echo '<div class="notice notice-warning"><p>' . esc_html__( 'Invalid ban key.', 'wc-anti-fraud-pro-lite' ) . '</p></div>';
+}
+
+function wca_notice_import_fail() {
+        if ( get_transient( 'wca_import_error' ) ) {
+                delete_transient( 'wca_import_error' );
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'Import failed: invalid file.', 'wc-anti-fraud-pro-lite' ) . '</p></div>';
+        }
+}
+add_action( 'admin_notices', 'wca_notice_import_fail' );
 
 /* Import/Export (unchanged) */
 function wca_export_settings() {
@@ -384,24 +398,35 @@ function wca_export_settings() {
 	exit;
 }
 function wca_import_settings() {
-	if ( ! current_user_can( 'manage_woocommerce' ) ) {
-		wp_die( '' );
-	}
-	if ( ! isset( $_POST['wca_import_nonce'] ) || ! wp_verify_nonce( $_POST['wca_import_nonce'], 'wca_import_nonce' ) ) {
-		wp_die( '' );
-	}
-	if ( ! isset( $_FILES['wca_file'] ) || empty( $_FILES['wca_file']['tmp_name'] ) ) {
-		wp_die( '' );
-	}
-	$raw  = file_get_contents( $_FILES['wca_file']['tmp_name'] );
-	$data = json_decode( $raw, true );
-	if ( is_array( $data ) ) {
-		$clean = wca_sanitize_opts_ext( $data );
-		update_option( 'wca_opts_ext', $clean );
-		wca_log_event( 'settings_imported', array( 'keys' => array_keys( $clean ) ), 'info' );
-	}
-	wp_safe_redirect( admin_url( 'admin.php?page=' . WCA_MENU_SLUG ) );
-	exit;
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+                wp_die( '' );
+        }
+        if ( ! isset( $_POST['wca_import_nonce'] ) || ! wp_verify_nonce( $_POST['wca_import_nonce'], 'wca_import_nonce' ) ) {
+                wp_die( '' );
+        }
+        if (
+                ! isset( $_FILES['wca_file'] ) ||
+                empty( $_FILES['wca_file']['tmp_name'] ) ||
+                ( $_FILES['wca_file']['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_OK ||
+                ( $_FILES['wca_file']['size'] ?? 0 ) > 1024 * 1024 ||
+                ( $_FILES['wca_file']['type'] ?? '' ) !== 'application/json'
+        ) {
+                set_transient( 'wca_import_error', 1, 30 );
+                wp_safe_redirect( admin_url( 'admin.php?page=' . WCA_MENU_SLUG ) );
+                exit;
+        }
+        $raw  = file_get_contents( $_FILES['wca_file']['tmp_name'] );
+        $data = json_decode( $raw, true );
+        if ( is_array( $data ) ) {
+                $clean = wca_sanitize_opts_ext( $data );
+                update_option( 'wca_opts_ext', $clean );
+                wca_log_event( 'settings_imported', array( 'keys' => array_keys( $clean ) ), 'info' );
+                delete_transient( 'wca_import_error' );
+        } else {
+                set_transient( 'wca_import_error', 1, 30 );
+        }
+        wp_safe_redirect( admin_url( 'admin.php?page=' . WCA_MENU_SLUG ) );
+        exit;
 }
 
 /* Settings changed log */
