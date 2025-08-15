@@ -21,36 +21,45 @@ function wca_get_log_entries()
     if (! file_exists($path) ) {
             return array();
     }
-        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $out   = array();
-    foreach ( $lines as $line ) {
-            $json_start = strpos($line, '{');
-        if ($json_start === false ) {
-                continue;
-        }
-            $json = substr($line, $json_start);
-            $data = json_decode($json, true);
-        if (! is_array($data) ) {
-                continue;
-        }
-            preg_match('/\b(INFO|DEBUG|WARNING|ERROR)\b/i', $line, $m);
-            $level   = strtolower($m[1] ?? 'info');
-            $time    = isset($data['time']) ? (int) $data['time'] : time();
-            $event   = isset($data['event']) ? (string) $data['event'] : '';
-            $context = $data;
-            unset($context['event'], $context['time']);
-            $out[] = array(
-                    'time'    => $time,
-                    'level'   => $level,
-                    'event'   => $event,
-                    'context' => wp_json_encode($context),
-                    'raw'     => $line,
-                    'country' => $data['country'] ?? '',
-                    'ip'      => $data['ip'] ?? '',
-                    'items'   => $data['items'] ?? array(),
-            );
-    }
-        return $out;
+       $limit = 5000; // Only read the last 5,000 lines to limit memory usage; adjust as needed.
+       $file  = new SplFileObject($path, 'r');
+       $file->seek(PHP_INT_MAX);
+       $last_line = $file->key();
+       $start     = max(0, $last_line - $limit);
+       $file->seek($start);
+       $out = array();
+   while (! $file->eof() ) {
+           $line = rtrim($file->fgets(), "\r\n");
+       if ($line === '') {
+               continue;
+       }
+           $json_start = strpos($line, '{');
+       if ($json_start === false ) {
+               continue;
+       }
+           $json = substr($line, $json_start);
+           $data = json_decode($json, true);
+       if (! is_array($data) ) {
+               continue;
+       }
+           preg_match('/\b(INFO|DEBUG|WARNING|ERROR)\b/i', $line, $m);
+           $level   = strtolower($m[1] ?? 'info');
+           $time    = isset($data['time']) ? (int) $data['time'] : time();
+           $event   = isset($data['event']) ? (string) $data['event'] : '';
+           $context = $data;
+           unset($context['event'], $context['time']);
+           $out[] = array(
+                   'time'    => $time,
+                   'level'   => $level,
+                   'event'   => $event,
+                   'context' => wp_json_encode($context),
+                   'raw'     => $line,
+                   'country' => $data['country'] ?? '',
+                   'ip'      => $data['ip'] ?? '',
+                   'items'   => $data['items'] ?? array(),
+           );
+   }
+       return $out;
 }
 
 /**
