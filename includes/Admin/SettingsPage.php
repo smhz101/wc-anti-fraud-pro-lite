@@ -231,15 +231,16 @@ function wca_admin_page() {
                                                 <?php if ( ! empty( $schema[ $tab ]['fields'] ) ) : ?>
                                                         <div class="wca-grid">
                                                                 <?php
-                                                                foreach ( $schema[ $tab ]['fields'] as $f ) :
-                                                                        $id    = $f[0];
-                                                                        $type  = $f[1];
-                                                                        $label = $f[2];
-                                                                        $def   = $f[3];
-                                                                        $help  = $f[4] ?? '';
-                                                                        $val   = isset( $opts[ $id ] ) ? $opts[ $id ] : $def;
-                                                                        ?>
-                                                                        <section class="wca-card wca-field" data-search="<?php echo esc_attr( strtolower( $label . ' ' . ( is_string( $help ) ? $help : implode( ' ', $help ) ) ) ); ?>">
+                                                               foreach ( $schema[ $tab ]['fields'] as $f ) :
+                                                                       $id      = $f[0];
+                                                                       $type    = $f[1];
+                                                                       $label   = $f[2];
+                                                                       $def     = $f[3];
+                                                                       $help    = $f[4] ?? '';
+                                                                       $val     = isset( $opts[ $id ] ) ? $opts[ $id ] : $def;
+                                                                       $depends = isset( $f['depends'] ) ? $f['depends'] : '';
+                                                                       ?>
+                                                                       <section class="wca-card wca-field" data-search="<?php echo esc_attr( strtolower( $label . ' ' . ( is_string( $help ) ? $help : implode( ' ', $help ) ) ) ); ?>"<?php echo $depends ? ' data-depends="' . esc_attr( $depends ) . '"' : ''; ?>>
                                                                                 <header class="wca-card-h">
                                                                                         <h3><?php echo esc_html( $label ); ?></h3>
                                                                                         <?php if ( ! empty( $help ) ) : ?>
