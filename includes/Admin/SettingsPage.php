@@ -280,6 +280,7 @@ function wca_render_input( $id, $type, $val, $help ) {
 	echo '<div class="wca-input">';
 	switch ( $type ) {
 		case 'checkbox':
+			echo '<input type="hidden" name="wca_opts_ext[' . esc_attr( $id ) . ']" value="0">';
 			echo '<label class="wca-switch"><input type="checkbox" name="wca_opts_ext[' . esc_attr( $id ) . ']" value="1" ' . checked( $val, 1, false ) . '><span class="wca-slider"></span></label>';
 			break;
 
