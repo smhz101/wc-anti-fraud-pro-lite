@@ -63,3 +63,46 @@ add_action( 'woocommerce_after_checkout_validation', 'wca_validate_checkout', 10
 add_action( 'woocommerce_checkout_create_order', 'wca_on_create_order', 10, 2 );
 add_filter( 'woocommerce_available_payment_gateways', 'wca_filter_gateways', 20 );
 add_action( 'admin_notices', 'wca_admin_notice_tip' );
+
+/**
+ * Declare compatibility with Woo features (HPOS, COGS, etc.).
+ * - Runs before Woo init, as required by FeaturesUtil.
+ * - Checks if each feature actually exists before declaring.
+ */
+add_action('before_woocommerce_init', 'wca_declare_woo_feature_compat');
+
+function wca_declare_woo_feature_compat() {
+	if ( ! class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+		return;
+	}
+
+	// Pull available features to avoid guessing slugs.
+	$features = \Automattic\WooCommerce\Utilities\FeaturesUtil::get_features();
+
+	// HPOS (High-Performance Order Storage).
+	if ( isset( $features['custom_order_tables'] ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+			'custom_order_tables',
+			__FILE__,
+			true // compatible
+		);
+	}
+
+	// COGS (Cost of Goods Sold) — introduced in WC 9.9+ and toggled under Advanced → Features.
+	if ( isset( $features['cogs'] ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+			'cogs',
+			__FILE__,
+			true
+		);
+	}
+
+	// (Optional) Cart & Checkout Blocks — avoids unrelated “incompatible” lists.
+	if ( isset( $features['cart_checkout_blocks'] ) ) {
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+			'cart_checkout_blocks',
+			__FILE__,
+			true
+		);
+	}
+}
