@@ -216,7 +216,7 @@
 
     var run = debounce(function () {
       var q = ($search.val() || '').toLowerCase();
-      $('.wca-field').each(function () {
+      $('fieldset.wca-field').each(function () {
         var $f = $(this);
         var hay = (($f.data('search') || '') + '').toLowerCase();
         $f.toggle(!q || hay.indexOf(q) !== -1);
@@ -264,7 +264,7 @@
    * Toggle field dependencies
    * --------------------------- */
   function wcaToggleDependencies() {
-    $('.wca-field[data-depends]').each(function () {
+    $('fieldset.wca-field[data-depends]').each(function () {
       var $field = $(this);
       var dep = $field.data('depends');
       var $input = $('input[name="wca_opts_ext[' + dep + ']"]');
