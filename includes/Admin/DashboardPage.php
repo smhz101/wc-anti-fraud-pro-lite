@@ -7,54 +7,80 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Render dashboard with basic analytics.
  */
 function wca_render_dashboard() {
-        $entries = function_exists( 'wca_get_log_entries' ) ? wca_get_log_entries() : array();
-        $now     = time();
-        $day_ago = $now - DAY_IN_SECONDS;
-        $week_ago = $now - WEEK_IN_SECONDS;
+        $cached    = get_transient( 'wca_dash_stats' );
+        $log_file  = function_exists( 'wc_get_log_file_path' ) ? wc_get_log_file_path( 'wc-antifraud-pro-lite' ) : '';
+        $log_mtime = ( $log_file && file_exists( $log_file ) ) ? filemtime( $log_file ) : 0;
+        $opts_hash = md5( wp_json_encode( get_option( 'wca_opts_ext', array() ) ) );
 
-        $stats = array(
-                'day'  => array( 'pass' => 0, 'blocked' => 0 ),
-                'week' => array( 'pass' => 0, 'blocked' => 0 ),
-        );
-        $countries = array();
-        $products  = array();
-        $ips       = array();
+        if ( $cached && isset( $cached['log_mtime'], $cached['opts_hash'] ) &&
+                (int) $cached['log_mtime'] === $log_mtime && $cached['opts_hash'] === $opts_hash ) {
+                $stats     = $cached['stats'];
+                $countries = $cached['countries'];
+                $products  = $cached['products'];
+                $ips       = $cached['ips'];
+        } else {
+                $entries  = function_exists( 'wca_get_log_entries' ) ? wca_get_log_entries() : array();
+                $now      = time();
+                $day_ago  = $now - DAY_IN_SECONDS;
+                $week_ago = $now - WEEK_IN_SECONDS;
 
-        foreach ( $entries as $e ) {
-                $time  = (int) $e['time'];
-                $event = $e['event'];
-                if ( $event === 'pass' || $event === 'blocked' ) {
-                        if ( $time >= $day_ago ) {
-                                $stats['day'][ $event ]++;
+                $stats     = array(
+                        'day'  => array( 'pass' => 0, 'blocked' => 0 ),
+                        'week' => array( 'pass' => 0, 'blocked' => 0 ),
+                );
+                $countries = array();
+                $products  = array();
+                $ips       = array();
+
+                foreach ( $entries as $e ) {
+                        $time  = (int) $e['time'];
+                        $event = $e['event'];
+                        if ( $event === 'pass' || $event === 'blocked' ) {
+                                if ( $time >= $day_ago ) {
+                                        $stats['day'][ $event ]++;
+                                }
+                                if ( $time >= $week_ago ) {
+                                        $stats['week'][ $event ]++;
+                                }
                         }
-                        if ( $time >= $week_ago ) {
-                                $stats['week'][ $event ]++;
-                        }
-                }
-                if ( $event === 'blocked' ) {
-                        if ( ! empty( $e['country'] ) ) {
-                                $countries[ $e['country'] ] = isset( $countries[ $e['country'] ] ) ? $countries[ $e['country'] ] + 1 : 1;
-                        }
-                        if ( ! empty( $e['ip'] ) ) {
-                                $ips[ $e['ip'] ] = isset( $ips[ $e['ip'] ] ) ? $ips[ $e['ip'] ] + 1 : 1;
-                        }
-                        if ( ! empty( $e['items'] ) && is_array( $e['items'] ) ) {
-                                foreach ( $e['items'] as $it ) {
-                                        $pid = $it['pid'] ?? 0;
-                                        if ( $pid ) {
-                                                $products[ $pid ] = isset( $products[ $pid ] ) ? $products[ $pid ] + 1 : 1;
+                        if ( $event === 'blocked' ) {
+                                if ( ! empty( $e['country'] ) ) {
+                                        $countries[ $e['country'] ] = isset( $countries[ $e['country'] ] ) ? $countries[ $e['country'] ] + 1 : 1;
+                                }
+                                if ( ! empty( $e['ip'] ) ) {
+                                        $ips[ $e['ip'] ] = isset( $ips[ $e['ip'] ] ) ? $ips[ $e['ip'] ] + 1 : 1;
+                                }
+                                if ( ! empty( $e['items'] ) && is_array( $e['items'] ) ) {
+                                        foreach ( $e['items'] as $it ) {
+                                                $pid = $it['pid'] ?? 0;
+                                                if ( $pid ) {
+                                                        $products[ $pid ] = isset( $products[ $pid ] ) ? $products[ $pid ] + 1 : 1;
+                                                }
                                         }
                                 }
                         }
                 }
-        }
 
-        arsort( $countries );
-        arsort( $products );
-        arsort( $ips );
-        $countries = array_slice( $countries, 0, 5, true );
-        $products  = array_slice( $products, 0, 5, true );
-        $ips       = array_slice( $ips, 0, 5, true );
+                arsort( $countries );
+                arsort( $products );
+                arsort( $ips );
+                $countries = array_slice( $countries, 0, 5, true );
+                $products  = array_slice( $products, 0, 5, true );
+                $ips       = array_slice( $ips, 0, 5, true );
+
+                set_transient(
+                        'wca_dash_stats',
+                        array(
+                                'stats'     => $stats,
+                                'countries' => $countries,
+                                'products'  => $products,
+                                'ips'       => $ips,
+                                'log_mtime' => $log_mtime,
+                                'opts_hash' => $opts_hash,
+                        ),
+                        5 * MINUTE_IN_SECONDS
+                );
+        }
 
         $bans = function_exists( 'wca_list_bans' ) ? wca_list_bans() : array();
         ?>
