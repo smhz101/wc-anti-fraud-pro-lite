@@ -83,6 +83,14 @@ function wca_render_dashboard() {
         }
 
         $bans = function_exists( 'wca_list_bans' ) ? wca_list_bans() : array();
+
+       $product_titles = array();
+       if ( $products && function_exists( 'wc_get_products' ) ) {
+               $objs = wc_get_products( array( 'include' => array_keys( $products ) ) );
+               foreach ( $objs as $obj ) {
+                       $product_titles[ $obj->get_id() ] = $obj->get_name();
+               }
+       }
         ?>
         <div class="wca-grid">
                 <section class="wca-card">
@@ -127,9 +135,9 @@ function wca_render_dashboard() {
                         <div class="wca-card-b">
                                 <?php if ( $products ) : ?>
                                         <ul>
-                                                <?php foreach ( $products as $pid => $cnt ) : ?>
-                                                        <li><?php echo esc_html( get_the_title( $pid ) . ' (#' . $pid . ') – ' . $cnt ); ?></li>
-                                                <?php endforeach; ?>
+                                               <?php foreach ( $products as $pid => $cnt ) : ?>
+                                                       <li><?php echo esc_html( ( $product_titles[ $pid ] ?? '' ) . ' (#' . $pid . ') – ' . $cnt ); ?></li>
+                                               <?php endforeach; ?>
                                         </ul>
                                 <?php else : ?>
                                         <p><?php esc_html_e( 'No data', 'wc-anti-fraud-pro-lite' ); ?></p>

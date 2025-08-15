@@ -11,6 +11,10 @@ if (! class_exists('WP_List_Table') ) {
  * Read and parse plugin log file lines.
  *
  * @return array[] Parsed entries with keys: time, level, event, context, raw, country, ip, items.
+ *
+ * @since 1.0.0
+ *
+ * @filter wca_log_tail_limit int Maximum number of log lines to read from the end of the file. Default 5000.
  */
 function wca_get_log_entries()
 {
@@ -21,7 +25,7 @@ function wca_get_log_entries()
     if (! file_exists($path) ) {
             return array();
     }
-       $limit = 5000; // Only read the last 5,000 lines to limit memory usage; adjust as needed.
+       $limit = apply_filters( 'wca_log_tail_limit', 5000 ); // Only read the last 5,000 lines to limit memory usage; adjust as needed.
        $file  = new SplFileObject($path, 'r');
        $file->seek(PHP_INT_MAX);
        $last_line = $file->key();
