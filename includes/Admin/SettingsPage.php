@@ -153,6 +153,11 @@ function wca_sanitize_opts_ext( $input ) {
 
 /* Main admin page router */
 function wca_admin_page() {
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'You do not have permission to access this page.', 'wc-anti-fraud-pro-lite' ) . '</p></div>';
+                return;
+        }
+
         $section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'dashboard';
         $allowed = array( 'dashboard', 'logs', 'settings' );
         if ( ! in_array( $section, $allowed, true ) ) {
