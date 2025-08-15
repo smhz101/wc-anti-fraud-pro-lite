@@ -130,12 +130,18 @@ function wca_sanitize_opts_ext( $input ) {
 		$out['flag_product_ids'] = '';
 	}
 
-	// text & textarea…
-	foreach ( array( 'allow_countries', 'deny_countries', 'flag_product_ids', 'block_message', 'phone_regex', 'postal_regex' ) as $k ) {
-		if ( ! isset( $out[ $k ] ) ) {
-			$out[ $k ] = isset( $in[ $k ] ) ? sanitize_text_field( $in[ $k ] ) : (string) ( $def[ $k ] ?? '' );
-		}
-	}
+        // text & textarea…
+        foreach ( array( 'allow_countries', 'deny_countries', 'flag_product_ids', 'block_message' ) as $k ) {
+                if ( ! isset( $out[ $k ] ) ) {
+                        $out[ $k ] = isset( $in[ $k ] ) ? sanitize_text_field( $in[ $k ] ) : (string) ( $def[ $k ] ?? '' );
+                }
+        }
+       foreach ( array( 'phone_regex', 'postal_regex' ) as $k ) {
+               if ( ! isset( $out[ $k ] ) ) {
+                       $raw       = isset( $in[ $k ] ) ? wp_unslash( $in[ $k ] ) : '';
+                       $out[ $k ] = trim( wp_strip_all_tags( $raw ) );
+               }
+       }
 	foreach ( array( 'ua_blacklist', 'disposable_domains', 'reject_address_keywords', 'ip_whitelist', 'ip_blacklist', 'email_whitelist', 'email_blacklist', 'card_gateway_ids' ) as $k ) {
 		$val       = isset( $in[ $k ] ) ? (string) $in[ $k ] : (string) ( $def[ $k ] ?? '' );
 		$val       = preg_replace( "/\r\n?/", "\n", $val );
@@ -376,10 +382,13 @@ function wca_handle_tools() {
 
 	global $wpdb;
 	$tool = sanitize_text_field( $_POST['wca_tool'] );
-	if ( $tool === 'clear-transients' ) {
-		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wca_%' OR option_name LIKE '_transient_timeout_wca_%'" );
-		wca_log_event( 'maintenance_clear', array(), 'info' );
-		add_action( 'admin_notices', 'wca_notice_tools_success' );
+        if ( $tool === 'clear-transients' ) {
+                $keys = $wpdb->get_col( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_wca_%' OR option_name LIKE '_transient_timeout_wca_%'" );
+                foreach ( $keys as $k ) {
+                        delete_option( $k );
+                }
+                wca_log_event( 'maintenance_clear', array(), 'info' );
+                add_action( 'admin_notices', 'wca_notice_tools_success' );
         } elseif ( $tool === 'unban' ) {
                 $key = isset( $_POST['wca_key'] ) ? sanitize_text_field( $_POST['wca_key'] ) : '';
                 if ( $key ) {

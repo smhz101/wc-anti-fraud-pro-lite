@@ -141,9 +141,9 @@ function wca_redact_ip( $ip ) {
 	return $ip;
 }
 function wca_common_ctx() {
-	$uid   = get_current_user_id();
-	$ua    = $_SERVER['HTTP_USER_AGENT'] ?? '';
-	$ref   = $_SERVER['HTTP_REFERER'] ?? '';
+        $uid   = get_current_user_id();
+        $ua    = sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' );
+        $ref   = esc_url_raw( $_SERVER['HTTP_REFERER'] ?? '' );
 	$ip    = wca_ip();
 	$total = 0.0;
 	$items = array();
