@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: WC Anti-Fraud Pro Lite
- * Plugin URI: https://example.com/
+ * Plugin URI: https://muzammil.dev/
  * Description: Pre-checkout risk checks, structured logging, presets, and admin tools (modern tabbed UI).
  * Author: Muzammil Hussain
  * Version: 1.8.0
@@ -12,6 +12,8 @@
  * WC tested up to: 9.1
  * Text Domain: wc-anti-fraud-pro-lite
  * Domain Path: /languages
+ * License: GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
