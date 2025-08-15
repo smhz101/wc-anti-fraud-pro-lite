@@ -260,6 +260,12 @@ function wca_render_input( $id, $type, $val, $help ) {
 					'any' => __( 'Any (OR)', 'wc-anti-fraud-pro-lite' ),
 					'all' => __( 'All (AND)', 'wc-anti-fraud-pro-lite' ),
 				);
+			} else if ( $id === 'validation_profile' ) {
+				// Load validation presets and extract only the labels for the dropdown
+				$presets = wca_validation_presets();
+				foreach ( $presets as $index => $preset ) {
+					$choices[$index] = $preset['label']; // use only label for option text
+				}
 			}
 			echo '<select name="wca_opts_ext[' . esc_attr( $id ) . ']" class="wca-select">';
 			foreach ( $choices as $k => $label ) {
