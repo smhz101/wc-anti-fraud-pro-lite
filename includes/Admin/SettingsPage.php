@@ -78,9 +78,9 @@ function wca_enqueue_admin_assets( $hook ) {
 
 /* Sanitizer */
 function wca_sanitize_opts_ext( $input ) {
-	$in  = is_array( $input ) ? wp_unslash( $input ) : array();
-	$def = wca_defaults();
-	$out = array();
+        $in  = is_array( $input ) ? wp_unslash( $input ) : array();
+        $def = wca_defaults();
+        $out = wca_opt();
 
 	// checkboxes
 	$checkboxes = array(
@@ -99,54 +99,65 @@ function wca_sanitize_opts_ext( $input ) {
 		'enable_reject_keywords',
 		'enable_gateway_friction',
 	);
-	foreach ( $checkboxes as $k ) {
-		$out[ $k ] = isset( $in[ $k ] ) ? 1 : 0; }
-
-	// numbers (ints)
-	foreach ( array( 'rate_ip_limit', 'rate_email_limit', 'ban_minutes', 'min_render_seconds', 'device_min_age' ) as $k ) {
-		$out[ $k ] = isset( $in[ $k ] ) ? max( 0, (int) $in[ $k ] ) : (int) $def[ $k ];
-	}
-
-	// floats
-	foreach ( array( 'low_value_threshold', 'min_total_for_card' ) as $k ) {
-		$val       = isset( $in[ $k ] ) ? $in[ $k ] : ( $def[ $k ] ?? '0' );
-		$out[ $k ] = is_numeric( $val ) ? (float) $val : (float) $def[ $k ];
-	}
-
-	// select values
-	$out['validation_profile'] = isset( $in['validation_profile'] ) ? sanitize_text_field( $in['validation_profile'] ) : ( $def['validation_profile'] ?? 'generic' );
-	$out['flag_match_mode']    = isset( $in['flag_match_mode'] ) ? ( in_array( $in['flag_match_mode'], array( 'any', 'all' ), true ) ? $in['flag_match_mode'] : 'any' ) : 'any';
-
-	// product multiselect: accept array or CSV
-	if ( isset( $in['flag_product_ids'] ) ) {
-		if ( is_array( $in['flag_product_ids'] ) ) {
-			$ids                     = array_map( 'intval', $in['flag_product_ids'] );
-			$ids                     = array_values( array_filter( $ids ) );
-			$out['flag_product_ids'] = implode( ',', $ids );
-		} else {
-			$out['flag_product_ids'] = sanitize_text_field( $in['flag_product_ids'] ); // fallback
-		}
-	} else {
-		$out['flag_product_ids'] = '';
-	}
-
-        // text & textarea…
-        foreach ( array( 'allow_countries', 'deny_countries', 'flag_product_ids', 'block_message' ) as $k ) {
-                if ( ! isset( $out[ $k ] ) ) {
-                        $out[ $k ] = isset( $in[ $k ] ) ? sanitize_text_field( $in[ $k ] ) : (string) ( $def[ $k ] ?? '' );
+        foreach ( $checkboxes as $k ) {
+                if ( array_key_exists( $k, $in ) ) {
+                        $out[ $k ] = ! empty( $in[ $k ] ) ? 1 : 0;
                 }
         }
-       foreach ( array( 'phone_regex', 'postal_regex' ) as $k ) {
-               if ( ! isset( $out[ $k ] ) ) {
-                       $raw       = isset( $in[ $k ] ) ? wp_unslash( $in[ $k ] ) : '';
-                       $out[ $k ] = trim( wp_strip_all_tags( $raw ) );
-               }
-       }
-	foreach ( array( 'ua_blacklist', 'disposable_domains', 'reject_address_keywords', 'ip_whitelist', 'ip_blacklist', 'email_whitelist', 'email_blacklist', 'card_gateway_ids' ) as $k ) {
-		$val       = isset( $in[ $k ] ) ? (string) $in[ $k ] : (string) ( $def[ $k ] ?? '' );
-		$val       = preg_replace( "/\r\n?/", "\n", $val );
-		$out[ $k ] = trim( $val );
-	}
+
+	// numbers (ints)
+        foreach ( array( 'rate_ip_limit', 'rate_email_limit', 'ban_minutes', 'min_render_seconds', 'device_min_age' ) as $k ) {
+                if ( array_key_exists( $k, $in ) ) {
+                        $out[ $k ] = max( 0, (int) $in[ $k ] );
+                }
+        }
+
+	// floats
+        foreach ( array( 'low_value_threshold', 'min_total_for_card' ) as $k ) {
+                if ( array_key_exists( $k, $in ) ) {
+                        $val       = $in[ $k ];
+                        $out[ $k ] = is_numeric( $val ) ? (float) $val : (float) ( $def[ $k ] ?? 0 );
+                }
+        }
+
+	// select values
+        if ( array_key_exists( 'validation_profile', $in ) ) {
+                $out['validation_profile'] = sanitize_text_field( $in['validation_profile'] );
+        }
+        if ( array_key_exists( 'flag_match_mode', $in ) ) {
+                $out['flag_match_mode'] = in_array( $in['flag_match_mode'], array( 'any', 'all' ), true ) ? $in['flag_match_mode'] : 'any';
+        }
+
+	// product multiselect: accept array or CSV
+        if ( array_key_exists( 'flag_product_ids', $in ) ) {
+                if ( is_array( $in['flag_product_ids'] ) ) {
+                        $ids                     = array_map( 'intval', $in['flag_product_ids'] );
+                        $ids                     = array_values( array_filter( $ids ) );
+                        $out['flag_product_ids'] = implode( ',', $ids );
+                } else {
+                        $out['flag_product_ids'] = sanitize_text_field( $in['flag_product_ids'] ); // fallback
+                }
+        }
+
+        // text & textarea…
+        foreach ( array( 'allow_countries', 'deny_countries', 'block_message' ) as $k ) {
+                if ( array_key_exists( $k, $in ) ) {
+                        $out[ $k ] = sanitize_text_field( $in[ $k ] );
+                }
+        }
+        foreach ( array( 'phone_regex', 'postal_regex' ) as $k ) {
+                if ( array_key_exists( $k, $in ) ) {
+                        $raw       = wp_unslash( $in[ $k ] );
+                        $out[ $k ] = trim( wp_strip_all_tags( $raw ) );
+                }
+        }
+        foreach ( array( 'ua_blacklist', 'disposable_domains', 'reject_address_keywords', 'ip_whitelist', 'ip_blacklist', 'email_whitelist', 'email_blacklist', 'card_gateway_ids' ) as $k ) {
+                if ( array_key_exists( $k, $in ) ) {
+                        $val       = (string) $in[ $k ];
+                        $val       = preg_replace( "/\r\n?/", "\n", $val );
+                        $out[ $k ] = trim( $val );
+                }
+        }
 
 	return $out;
 }
