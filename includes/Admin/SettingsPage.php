@@ -15,9 +15,9 @@ function wca_admin_menu() {
 		__( 'Anti-Fraud', 'wc-anti-fraud-pro-lite' ),
 		__( 'Anti-Fraud', 'wc-anti-fraud-pro-lite' ),
 		'manage_woocommerce',
-		WCA_MENU_SLUG,
-		'wca_settings_page_tabs'
-	);
+               WCA_MENU_SLUG,
+               'wca_admin_page'
+        );
 }
 
 /* Enqueue admin assets only on our page */
@@ -135,97 +135,118 @@ function wca_sanitize_opts_ext( $input ) {
 	return $out;
 }
 
-/* Settings page (tabs) */
-function wca_settings_page_tabs() {
-	$schema = wca_fields_schema();
-	$opts   = wca_opt();
-	$tab    = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general';
-	if ( ! isset( $schema[ $tab ] ) ) {
-		$tab = 'general';
-	}
+/* Main admin page router */
+function wca_admin_page() {
+        $section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'dashboard';
+        $allowed = array( 'dashboard', 'logs', 'settings' );
+        if ( ! in_array( $section, $allowed, true ) ) {
+                $section = 'dashboard';
+        }
 
-	$base = menu_page_url( WCA_MENU_SLUG, false );
-	?>
-	<div class="wrap wca-wrap">
-		<h1><?php esc_html_e( 'WooCommerce Anti-Fraud (Lite)', 'wc-anti-fraud-pro-lite' ); ?></h1>
-		<div class="wca-header">
-			<div class="wca-actions">
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wca-inline">
-					<?php wp_nonce_field( 'wca_export_nonce', 'wca_export_nonce' ); ?>
-					<input type="hidden" name="action" value="wca_export">
-					<button class="button"><?php esc_html_e( 'Export', 'wc-anti-fraud-pro-lite' ); ?></button>
-				</form>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wca-inline" enctype="multipart/form-data">
-					<?php wp_nonce_field( 'wca_import_nonce', 'wca_import_nonce' ); ?>
-					<input type="hidden" name="action" value="wca_import">
-					<label class="wca-file">
-						<input type="file" name="wca_file" accept="application/json" />
-						<span><?php esc_html_e( 'Choose JSON', 'wc-anti-fraud-pro-lite' ); ?></span>
-					</label>
-					<button class="button button-primary"><?php esc_html_e( 'Import', 'wc-anti-fraud-pro-lite' ); ?></button>
-				</form>
-				<input type="search" id="wca-search" class="wca-search" placeholder="<?php esc_attr_e( 'Search settings…', 'wc-anti-fraud-pro-lite' ); ?>">
-			</div>
-		</div>
+        $base = menu_page_url( WCA_MENU_SLUG, false );
+        $schema = wca_fields_schema();
+        $opts   = wca_opt();
+        $tab    = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general';
+        if ( ! isset( $schema[ $tab ] ) ) {
+                $tab = 'general';
+        }
+        ?>
+        <div class="wrap wca-wrap">
+                <h1><?php esc_html_e( 'WooCommerce Anti-Fraud (Lite)', 'wc-anti-fraud-pro-lite' ); ?></h1>
 
-		<h2 class="nav-tab-wrapper wca-tabs">
-			<?php foreach ( $schema as $key => $group ) : ?>
-				<a class="nav-tab <?php echo $key === $tab ? 'nav-tab-active' : ''; ?>"
-					href="<?php echo esc_url( add_query_arg( 'tab', $key, $base ) ); ?>">
-					<?php echo esc_html( $group['title'] ); ?>
-				</a>
-			<?php endforeach; ?>
-		</h2>
+                <nav class="wca-top-nav">
+                        <a href="<?php echo esc_url( add_query_arg( 'section', 'dashboard', $base ) ); ?>" class="<?php echo $section === 'dashboard' ? 'current' : ''; ?>"><?php esc_html_e( 'Dashboard', 'wc-anti-fraud-pro-lite' ); ?></a>
+                        <a href="<?php echo esc_url( add_query_arg( 'section', 'logs', $base ) ); ?>" class="<?php echo $section === 'logs' ? 'current' : ''; ?>"><?php esc_html_e( 'Logs', 'wc-anti-fraud-pro-lite' ); ?></a>
+                        <a href="<?php echo esc_url( add_query_arg( 'section', 'settings', $base ) ); ?>" class="<?php echo $section === 'settings' ? 'current' : ''; ?>"><?php esc_html_e( 'Settings', 'wc-anti-fraud-pro-lite' ); ?></a>
+                </nav>
 
-		<form method="post" action="options.php" class="wca-form">
-			<?php settings_fields( 'wca_group_ext' ); ?>
+                <?php if ( $section === 'settings' ) : ?>
+                        <div class="wca-header">
+                                <div class="wca-actions">
+                                        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wca-inline">
+                                                <?php wp_nonce_field( 'wca_export_nonce', 'wca_export_nonce' ); ?>
+                                                <input type="hidden" name="action" value="wca_export">
+                                                <button class="button"><?php esc_html_e( 'Export', 'wc-anti-fraud-pro-lite' ); ?></button>
+                                        </form>
+                                        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wca-inline" enctype="multipart/form-data">
+                                                <?php wp_nonce_field( 'wca_import_nonce', 'wca_import_nonce' ); ?>
+                                                <input type="hidden" name="action" value="wca_import">
+                                                <label class="wca-file">
+                                                        <input type="file" name="wca_file" accept="application/json" />
+                                                        <span><?php esc_html_e( 'Choose JSON', 'wc-anti-fraud-pro-lite' ); ?></span>
+                                                </label>
+                                                <button class="button button-primary"><?php esc_html_e( 'Import', 'wc-anti-fraud-pro-lite' ); ?></button>
+                                        </form>
+                                        <input type="search" id="wca-search" class="wca-search" placeholder="<?php esc_attr_e( 'Search settings…', 'wc-anti-fraud-pro-lite' ); ?>">
+                                </div>
+                        </div>
 
-			<?php if ( ! empty( $schema[ $tab ]['fields'] ) ) : ?>
-				<div class="wca-grid">
-					<?php
-					foreach ( $schema[ $tab ]['fields'] as $f ) :
-						$id    = $f[0];
-						$type  = $f[1];
-						$label = $f[2];
-						$def   = $f[3];
-						$help  = $f[4] ?? '';
-						$val   = isset( $opts[ $id ] ) ? $opts[ $id ] : $def;
-						?>
-						<section class="wca-card wca-field" data-search="<?php echo esc_attr( strtolower( $label . ' ' . ( is_string( $help ) ? $help : implode( ' ', $help ) ) ) ); ?>">
-							<header class="wca-card-h">
-								<h3><?php echo esc_html( $label ); ?></h3>
-								<?php if ( ! empty( $help ) ) : ?>
-									<button type="button" class="wca-help" aria-label="<?php esc_attr_e( 'Help', 'wc-anti-fraud-pro-lite' ); ?>">?</button>
-								<?php endif; ?>
-							</header>
-							<div class="wca-card-b">
-								<?php wca_render_input( $id, $type, $val, $help ); ?>
-							</div>
-						</section>
-					<?php endforeach; ?>
-				</div>
-			<?php else : ?>
-				<p><?php esc_html_e( 'No configurable fields on this tab.', 'wc-anti-fraud-pro-lite' ); ?></p>
-			<?php endif; ?>
+                        <div class="wca-settings-grid wca-settings">
+                                <ul class="wca-vert-nav">
+                                        <?php foreach ( $schema as $key => $group ) : ?>
+                                                <li class="<?php echo $key === $tab ? 'active' : ''; ?>">
+                                                        <a href="<?php echo esc_url( add_query_arg( array( 'section' => 'settings', 'tab' => $key ), $base ) ); ?>">
+                                                                <?php echo esc_html( $group['title'] ); ?>
+                                                        </a>
+                                                </li>
+                                        <?php endforeach; ?>
+                                </ul>
 
-			<div class="wca-savebar">
-				<?php submit_button( null, 'primary', 'submit', false ); ?>
-			</div>
-		</form>
+                                <div class="wca-settings-form">
+                                        <form method="post" action="options.php" class="wca-form">
+                                                <?php settings_fields( 'wca_group_ext' ); ?>
 
-		<?php if ( $tab === 'maintenance' ) : ?>
-			<div class="wca-tools">
-				<h3><?php esc_html_e( 'Maintenance Tools', 'wc-anti-fraud-pro-lite' ); ?></h3>
-				<p class="description"><?php esc_html_e( 'Clear rate-limit counters and temp bans. Logs: Woo → Status → Logs → wc-antifraud-pro-lite', 'wc-anti-fraud-pro-lite' ); ?></p>
-				<form method="post">
-					<?php wp_nonce_field( 'wca_tools_nonce', 'wca_tools_nonce' ); ?>
-					<input type="hidden" name="wca_tool" value="clear-transients">
-					<button class="button"><?php esc_html_e( 'Clear Counters / Bans', 'wc-anti-fraud-pro-lite' ); ?></button>
-				</form>
-			</div>
-		<?php endif; ?>
-	</div>
-	<?php
+                                                <?php if ( ! empty( $schema[ $tab ]['fields'] ) ) : ?>
+                                                        <div class="wca-grid">
+                                                                <?php
+                                                                foreach ( $schema[ $tab ]['fields'] as $f ) :
+                                                                        $id    = $f[0];
+                                                                        $type  = $f[1];
+                                                                        $label = $f[2];
+                                                                        $def   = $f[3];
+                                                                        $help  = $f[4] ?? '';
+                                                                        $val   = isset( $opts[ $id ] ) ? $opts[ $id ] : $def;
+                                                                        ?>
+                                                                        <section class="wca-card wca-field" data-search="<?php echo esc_attr( strtolower( $label . ' ' . ( is_string( $help ) ? $help : implode( ' ', $help ) ) ) ); ?>">
+                                                                                <header class="wca-card-h">
+                                                                                        <h3><?php echo esc_html( $label ); ?></h3>
+                                                                                        <?php if ( ! empty( $help ) ) : ?>
+                                                                                                <button type="button" class="wca-help" aria-label="<?php esc_attr_e( 'Help', 'wc-anti-fraud-pro-lite' ); ?>">?</button>
+                                                                                        <?php endif; ?>
+                                                                                </header>
+                                                                                <div class="wca-card-b">
+                                                                                        <?php wca_render_input( $id, $type, $val, $help ); ?>
+                                                                                </div>
+                                                                        </section>
+                                                                <?php endforeach; ?>
+                                                        </div>
+                                                <?php else : ?>
+                                                        <p><?php esc_html_e( 'No configurable fields on this tab.', 'wc-anti-fraud-pro-lite' ); ?></p>
+                                                <?php endif; ?>
+
+                                                <div class="wca-savebar">
+                                                        <?php submit_button( null, 'primary', 'submit', false ); ?>
+                                                </div>
+                                        </form>
+                                </div>
+                        </div>
+                <?php elseif ( $section === 'logs' ) : ?>
+                        <?php wca_render_logs(); ?>
+                <?php else : ?>
+                        <?php wca_render_dashboard(); ?>
+                <?php endif; ?>
+        </div>
+        <?php
+}
+
+/* Dashboard placeholder */
+function wca_render_dashboard() {
+        echo '<p>' . esc_html__( 'Dashboard coming soon.', 'wc-anti-fraud-pro-lite' ) . '</p>';
+}
+
+/* Logs placeholder */
+function wca_render_logs() {
+        echo '<p>' . esc_html__( 'Logs viewer coming soon.', 'wc-anti-fraud-pro-lite' ) . '</p>';
 }
 
 /* Render one input (compact, modern) */

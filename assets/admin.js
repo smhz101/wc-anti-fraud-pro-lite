@@ -263,11 +263,13 @@
    * Boot
    * --------------------------- */
   $(function () {
-    wcaInitSearch();
-    wcaInitHelpToggles();
-    wcaInitProductSelect();
-    wcaBindPreviewTriggers();
-    // Initial paint
-    wcaUpdateCartPreview();
+    if ($('.wca-settings').length) {
+      wcaInitSearch();
+      wcaInitHelpToggles();
+      wcaInitProductSelect();
+      wcaBindPreviewTriggers();
+      // Initial paint
+      wcaUpdateCartPreview();
+    }
   });
 })(jQuery);
