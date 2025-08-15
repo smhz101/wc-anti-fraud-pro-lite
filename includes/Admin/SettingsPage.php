@@ -460,7 +460,10 @@ function wca_on_settings_updated( $old, $new ) {
 			$changed[] = $k;
 		}
 	}
-	if ( $changed ) {
-		wca_log_event( 'settings_updated', array( 'keys' => $changed ), 'info' );
-	}
+       if ( $changed ) {
+               wca_log_event( 'settings_updated', array( 'keys' => $changed ), 'info' );
+       }
+
+       // Invalidate cached dashboard stats when settings change.
+       delete_transient( 'wca_dash_stats' );
 }
