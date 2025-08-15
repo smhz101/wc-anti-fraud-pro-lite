@@ -22,12 +22,18 @@ function wca_admin_menu() {
 
 /* Enqueue admin assets only on our page */
 function wca_enqueue_admin_assets( $hook ) {
-	if ( $hook !== 'woocommerce_page_' . WCA_MENU_SLUG ) {
-		return;
-	}
+       if ( $hook !== 'woocommerce_page_' . WCA_MENU_SLUG ) {
+               return;
+       }
 
-	wp_enqueue_style( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.css', array(), WCA_PRO_LITE_ACTIVE );
-	wp_enqueue_script( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.js', array( 'jquery' ), WCA_PRO_LITE_ACTIVE, true );
+       $section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'dashboard';
+
+       wp_enqueue_style( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.css', array(), WCA_PRO_LITE_ACTIVE );
+       wp_enqueue_script( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.js', array( 'jquery' ), WCA_PRO_LITE_ACTIVE, true );
+
+       if ( $section === 'dashboard' ) {
+               wp_enqueue_script( 'chart.js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.0', true );
+       }
 
         // SelectWoo (WooCommerce’s Select2 fork)
         wp_enqueue_script( 'selectWoo' );           // provided by WooCommerce
@@ -230,23 +236,17 @@ function wca_admin_page() {
                                         </form>
                                 </div>
                         </div>
-                <?php elseif ( $section === 'logs' ) : ?>
-                        <?php wca_render_logs(); ?>
-                <?php else : ?>
-                        <?php wca_render_dashboard(); ?>
-                <?php endif; ?>
-        </div>
-        <?php
-}
-
-/* Dashboard placeholder */
-function wca_render_dashboard() {
-        echo '<p>' . esc_html__( 'Dashboard coming soon.', 'wc-anti-fraud-pro-lite' ) . '</p>';
-}
-
-/* Logs placeholder */
-function wca_render_logs() {
-        echo '<p>' . esc_html__( 'Logs viewer coming soon.', 'wc-anti-fraud-pro-lite' ) . '</p>';
+               <?php elseif ( $section === 'logs' ) : ?>
+                       <div class="wca-logs">
+                               <?php wca_render_logs(); ?>
+                       </div>
+               <?php else : ?>
+                       <div class="wca-dashboard">
+                               <?php wca_render_dashboard(); ?>
+                       </div>
+               <?php endif; ?>
+       </div>
+       <?php
 }
 
 /* Render one input (compact, modern) */

@@ -260,16 +260,106 @@
   }
 
   /* -----------------------------
+   * Vertical navigation (persist search)
+   * --------------------------- */
+  function wcaInitVertNav() {
+    var $search = $('#wca-search');
+    var saved = sessionStorage.getItem('wca-search');
+    if (saved && $search.length) {
+      $search.val(saved).trigger('input');
+    }
+    $search.on('input', function () {
+      sessionStorage.setItem('wca-search', $search.val() || '');
+    });
+    $(document).on('click', '.wca-vert-nav a', function () {
+      sessionStorage.setItem('wca-search', $search.val() || '');
+    });
+  }
+
+  /* -----------------------------
+   * Dashboard charts
+   * --------------------------- */
+  function wcaInitDashboard() {
+    var $canvas = $('#wca-checkout-chart');
+    if (!$canvas.length || typeof Chart === 'undefined') return;
+    var stats = $canvas.data('stats') || {};
+    var ctx = $canvas[0].getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Allowed', 'Blocked'],
+        datasets: [
+          {
+            label: '24h',
+            data: [stats.day ? stats.day.pass || 0 : 0, stats.day ? stats.day.blocked || 0 : 0],
+            backgroundColor: '#4ade80',
+          },
+          {
+            label: '7d',
+            data: [stats.week ? stats.week.pass || 0 : 0, stats.week ? stats.week.blocked || 0 : 0],
+            backgroundColor: '#f87171',
+          },
+        ],
+      },
+      options: { responsive: true, maintainAspectRatio: false },
+    });
+  }
+
+  /* -----------------------------
+   * Logs table interactions
+   * --------------------------- */
+  function wcaInitLogs() {
+    var $form = $('#wca-log-filters');
+    if (!$form.length) return;
+
+    var refresh = debounce(function () {
+      var url = $form.attr('action') + '?' + $form.serialize();
+      $.get(url, function (html) {
+        var $html = $(html);
+        var $newTable = $html.find('#wca-log-table');
+        if ($newTable.length) {
+          $('#wca-log-table').html($newTable.html());
+        }
+      });
+    }, 300);
+
+    $form.on('input', 'input[name="s"]', refresh);
+    $form.on('change', 'select', refresh);
+    $form.on('submit', function (e) {
+      e.preventDefault();
+      refresh();
+    });
+
+    $('#wca-log-table').on('click', '.tablenav-pages a, th a', function (e) {
+      e.preventDefault();
+      var url = $(this).attr('href');
+      $.get(url, function (html) {
+        var $html = $(html);
+        var $newTable = $html.find('#wca-log-table');
+        if ($newTable.length) {
+          $('#wca-log-table').html($newTable.html());
+        }
+      });
+    });
+  }
+
+  /* -----------------------------
    * Boot
    * --------------------------- */
   $(function () {
     if ($('.wca-settings').length) {
+      wcaInitVertNav();
       wcaInitSearch();
       wcaInitHelpToggles();
       wcaInitProductSelect();
       wcaBindPreviewTriggers();
-      // Initial paint
       wcaUpdateCartPreview();
+    }
+    if ($('.wca-dashboard').length) {
+      wcaInitDashboard();
+    }
+    if ($('.wca-logs').length) {
+      wcaInitLogs();
     }
   });
 })(jQuery);
