@@ -185,12 +185,18 @@ function wca_log_event( $event, array $data = array(), $level = 'info' ) {
 	if ( isset( $data['order_id'] ) ) {
 		$data['order_id'] = (int) $data['order_id'];
 	}
-	$payload = array_merge( array( 'event' => (string) $event ), wca_common_ctx(), $data );
-	$json    = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
-	if ( strlen( $json ) > 8000 ) {
-		$json = substr( $json, 0, 8000 ) . '...';
-	}
-	wc_get_logger()->log( $level, $json, array( 'source' => 'wc-antifraud-pro-lite' ) );
+        $payload = array_merge( array( 'event' => (string) $event ), wca_common_ctx(), $data );
+        $json    = wp_json_encode( $payload, JSON_UNESCAPED_SLASHES );
+        if ( ! is_string( $json ) ) {
+                $json = wp_json_encode( array( 'event' => (string) $event, 'error' => 'json_encode_failed' ) );
+                if ( ! is_string( $json ) ) {
+                        return;
+                }
+        }
+        if ( strlen( $json ) > 8000 ) {
+                $json = substr( $json, 0, 8000 ) . '...';
+        }
+        wc_get_logger()->log( $level, $json, array( 'source' => 'wc-antifraud-pro-lite' ) );
 }
 
 /* ----------- Lists & UA ----------- */

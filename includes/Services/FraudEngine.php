@@ -19,9 +19,21 @@ function wca_set_first_seen_cookie() {
 	if ( is_admin() ) {
 		return;
 	}
-	if ( ! isset( $_COOKIE['wca_seen_ts'] ) ) {
-		setcookie( 'wca_seen_ts', (string) time(), time() + 86400, COOKIEPATH ?: '/', $_SERVER['HTTP_HOST'] ?? '', is_ssl(), true );
-	}
+        if ( ! isset( $_COOKIE['wca_seen_ts'] ) ) {
+                $domain = sanitize_text_field( parse_url( home_url(), PHP_URL_HOST ) );
+                setcookie(
+                        'wca_seen_ts',
+                        (string) time(),
+                        array(
+                                'expires'  => time() + 86400,
+                                'path'     => COOKIEPATH ?: '/',
+                                'domain'   => $domain,
+                                'secure'   => is_ssl(),
+                                'httponly' => true,
+                                'samesite' => 'Lax',
+                        )
+                );
+        }
 }
 
 /* Inject honeypots + timestamp */
@@ -155,12 +167,13 @@ function wca_validate_checkout( $data, $errors ) {
 	/** ---------------------------- */
 
 	// Referrer / UA
-	if ( ! empty( $o['strict_ref'] ) ) {
-		$checks['referrer_ok'] = ( ! empty( $ref ) && stripos( $ref, $host ) !== false );
-		if ( ! $checks['referrer_ok'] ) {
-			$block     = true;
-			$reasons[] = 'bad_referrer'; }
-	}
+        if ( ! empty( $o['strict_ref'] ) ) {
+                $ref_host               = $ref ? parse_url( $ref, PHP_URL_HOST ) : '';
+                $checks['referrer_ok']  = ( $ref_host && $ref_host === $host );
+                if ( ! $checks['referrer_ok'] ) {
+                        $block     = true;
+                        $reasons[] = 'bad_referrer'; }
+        }
 	if ( $ua && wca_bad_ua( $ua ) ) {
 		$block     = true;
 		$reasons[] = 'bad_ua'; }
