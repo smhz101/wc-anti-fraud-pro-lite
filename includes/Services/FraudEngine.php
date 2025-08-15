@@ -81,10 +81,10 @@ function wca_validate_checkout( $data, $errors ) {
 		return;
 	}
 
-	$ip   = wca_ip();
-	$ua   = $_SERVER['HTTP_USER_AGENT'] ?? '';
-	$ref  = $_SERVER['HTTP_REFERER'] ?? '';
-	$host = $_SERVER['SERVER_NAME'] ?? '';
+        $ip   = wca_ip();
+        $ua   = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $ref  = $_SERVER['HTTP_REFERER'] ?? '';
+        $host = sanitize_text_field( parse_url( home_url(), PHP_URL_HOST ) );
 
 	if ( $ip && in_array( $ip, wca_lines_to_array( $o['ip_whitelist'] ), true ) ) {
 		return;
@@ -168,7 +168,7 @@ function wca_validate_checkout( $data, $errors ) {
 
 	// Referrer / UA
         if ( ! empty( $o['strict_ref'] ) ) {
-                $ref_host               = $ref ? parse_url( $ref, PHP_URL_HOST ) : '';
+                $ref_host               = $ref ? sanitize_text_field( parse_url( $ref, PHP_URL_HOST ) ) : '';
                 $checks['referrer_ok']  = ( $ref_host && $ref_host === $host );
                 if ( ! $checks['referrer_ok'] ) {
                         $block     = true;

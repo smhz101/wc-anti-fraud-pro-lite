@@ -84,6 +84,13 @@ function wca_render_dashboard() {
 
         $bans = function_exists( 'wca_list_bans' ) ? wca_list_bans() : array();
 
+       if ( $ips ) {
+               $ips = array_combine(
+                       array_map( 'wca_redact_ip', array_keys( $ips ) ),
+                       array_values( $ips )
+               );
+       }
+
        $product_titles = array();
        if ( $products && function_exists( 'wc_get_products' ) ) {
                $objs = wc_get_products( array( 'include' => array_keys( $products ) ) );

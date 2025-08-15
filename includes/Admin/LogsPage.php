@@ -25,7 +25,10 @@ function wca_get_log_entries()
     if (! file_exists($path) ) {
             return array();
     }
-       $limit = apply_filters( 'wca_log_tail_limit', 5000 ); // Only read the last 5,000 lines to limit memory usage; adjust as needed.
+       $limit = absint( apply_filters( 'wca_log_tail_limit', 5000 ) ); // Only read the last 5,000 lines to limit memory usage; adjust as needed.
+       if ( 0 === $limit ) {
+               $limit = 5000;
+       }
        $file  = new SplFileObject($path, 'r');
        $file->seek(PHP_INT_MAX);
        $last_line = $file->key();
@@ -166,6 +169,16 @@ class WCA_Log_Table extends WP_List_Table
  */
 function wca_render_logs()
 {
+        $entries = wca_get_log_entries();
+        $events  = array();
+        foreach ( $entries as $e ) {
+                if ( ! empty( $e['event'] ) ) {
+                        $key            = sanitize_key( $e['event'] );
+                        $events[ $key ] = $e['event'];
+                }
+        }
+        ksort( $events );
+
         $table = new WCA_Log_Table();
         $table->prepare_items();
         $level  = isset($_GET['level']) ? sanitize_key($_GET['level']) : '';
@@ -185,8 +198,9 @@ function wca_render_logs()
                         </select>
                         <select name="event">
                                 <option value=""><?php esc_html_e('All events', 'wc-anti-fraud-pro-lite'); ?></option>
-                                <option value="pass" <?php selected($event, 'pass'); ?>>pass</option>
-                                <option value="blocked" <?php selected($event, 'blocked'); ?>>blocked</option>
+                                <?php foreach ( $events as $key => $label ) : ?>
+                                        <option value="<?php echo esc_attr( $key ); ?>" <?php selected( $event, $key ); ?>><?php echo esc_html( $label ); ?></option>
+                                <?php endforeach; ?>
                         </select>
                         <noscript><button class="button">Filter</button></noscript>
                 </div>
