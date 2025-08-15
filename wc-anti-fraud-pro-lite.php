@@ -39,6 +39,7 @@ add_action( 'init', 'wca_load_textdomain' );
 require_once WCA_PLUGIN_DIR . 'includes/Presets.php';
 require_once WCA_PLUGIN_DIR . 'includes/Functions.php';
 require_once WCA_PLUGIN_DIR . 'includes/Admin/Schema.php';
+// Admin pages (dashboard, logs, settings)
 require_once WCA_PLUGIN_DIR . 'includes/Admin/SettingsPage.php';
 require_once WCA_PLUGIN_DIR . 'includes/Services/FraudEngine.php';
 require_once WCA_PLUGIN_DIR . 'includes/Services/Telemetry.php';
