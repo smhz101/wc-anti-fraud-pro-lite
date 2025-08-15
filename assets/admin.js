@@ -8,6 +8,7 @@
  * Dependencies:
  * - jQuery
  * - selectWoo (loaded by WooCommerce)
+ * - wca-chart (bundled Chart.js)
  * - window.WCA_PRESETS (localized in PHP; provides ajax + currency)
  */
 (function ($) {

@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Hide *card* gateways under a minimum total when enabled.
  * PayPal/Wallets remain visible unless admin explicitly lists their IDs.
+ * Uses `get_total('edit')` to ensure a numeric cart total.
  */
 function wca_filter_gateways( $gateways ) {
 	$o = wca_opt();
@@ -13,9 +14,9 @@ function wca_filter_gateways( $gateways ) {
 		return $gateways;
 	}
 
-	$total = (float) WC()->cart->total;
-	$min   = (float) $o['min_total_for_card'];
-	$ids   = wca_lines_to_array( $o['card_gateway_ids'] );
+       $total = (float) WC()->cart->get_total( 'edit' );
+       $min   = (float) $o['min_total_for_card'];
+       $ids   = wca_lines_to_array( $o['card_gateway_ids'] );
 
 	if ( $min > 0 && $total > 0 && $total < $min && ! empty( $ids ) ) {
 		$removed = array();

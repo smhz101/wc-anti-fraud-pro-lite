@@ -29,11 +29,15 @@ function wca_enqueue_admin_assets( $hook ) {
        $section = isset( $_GET['section'] ) ? sanitize_key( $_GET['section'] ) : 'dashboard';
 
        wp_enqueue_style( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.css', array(), WCA_PRO_LITE_ACTIVE );
-       wp_enqueue_script( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.js', array( 'jquery' ), WCA_PRO_LITE_ACTIVE, true );
+
+       $deps = array( 'jquery' );
 
        if ( $section === 'dashboard' ) {
-               wp_enqueue_script( 'chart.js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.0', true );
+               wp_enqueue_script( 'wca-chart', WCA_PLUGIN_URL . 'assets/chart.min.js', array(), '4.4.0', true );
+               $deps[] = 'wca-chart';
        }
+
+       wp_enqueue_script( 'wca-admin', WCA_PLUGIN_URL . 'assets/admin.js', $deps, WCA_PRO_LITE_ACTIVE, true );
 
         // SelectWoo (WooCommerce’s Select2 fork)
         wp_enqueue_script( 'selectWoo' );           // provided by WooCommerce
@@ -295,21 +299,27 @@ function wca_render_input( $id, $type, $val, $help ) {
 			echo '</select>';
 			break;
 
-		case 'product_multi':
-			$selected = array();
-			$ids      = array_values( array_filter( array_map( 'intval', explode( ',', (string) $val ) ) ) );
-			foreach ( $ids as $pid ) {
-				$title = get_the_title( $pid );
-				if ( $title ) {
-					$selected[ $pid ] = $title . ' (#' . $pid . ')';
-				}
-			}
-			echo '<select multiple="multiple" id="wca-flag-products" name="wca_opts_ext[' . esc_attr( $id ) . '][]" class="wca-select2" style="width:100%">';
-			foreach ( $selected as $pid => $label ) {
-				echo '<option value="' . esc_attr( $pid ) . '" selected="selected">' . esc_html( $label ) . '</option>';
-			}
-			echo '</select>';
-			break;
+               case 'product_multi':
+                       $selected = array();
+                       $ids      = array_values( array_filter( array_map( 'intval', explode( ',', (string) $val ) ) ) );
+                       if ( $ids ) {
+                               $products = wc_get_products(
+                                       array(
+                                               'include' => $ids,
+                                               'limit'   => count( $ids ),
+                                       )
+                               );
+                               foreach ( $products as $product ) {
+                                       $pid              = $product->get_id();
+                                       $selected[ $pid ] = $product->get_name() . ' (#' . $pid . ')';
+                               }
+                       }
+                       echo '<select multiple="multiple" id="wca-flag-products" name="wca_opts_ext[' . esc_attr( $id ) . '][]" class="wca-select2" style="width:100%">';
+                       foreach ( $selected as $pid => $label ) {
+                               echo '<option value="' . esc_attr( $pid ) . '" selected="selected">' . esc_html( $label ) . '</option>';
+                       }
+                       echo '</select>';
+                       break;
 
 		default:
 			echo '<input type="text" name="wca_opts_ext[' . esc_attr( $id ) . ']" value="' . esc_attr( $val ) . '" class="regular-text wca-text">';
@@ -429,13 +439,24 @@ function wca_import_settings() {
                 ! isset( $_FILES['wca_file'] ) ||
                 empty( $_FILES['wca_file']['tmp_name'] ) ||
                 ( $_FILES['wca_file']['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_OK ||
-                ( $_FILES['wca_file']['size'] ?? 0 ) > 1024 * 1024 ||
-                ( $_FILES['wca_file']['type'] ?? '' ) !== 'application/json'
+                ( $_FILES['wca_file']['size'] ?? 0 ) > 1024 * 1024
         ) {
                 set_transient( 'wca_import_error', 1, 30 );
                 wp_safe_redirect( admin_url( 'admin.php?page=' . WCA_MENU_SLUG ) );
                 exit;
         }
+
+        $file_check = wp_check_filetype_and_ext(
+                $_FILES['wca_file']['tmp_name'],
+                $_FILES['wca_file']['name'],
+                array( 'json' => 'application/json' )
+        );
+        if ( ( $file_check['type'] ?? '' ) !== 'application/json' ) {
+                set_transient( 'wca_import_error', 1, 30 );
+                wp_safe_redirect( admin_url( 'admin.php?page=' . WCA_MENU_SLUG ) );
+                exit;
+        }
+
         $raw  = file_get_contents( $_FILES['wca_file']['tmp_name'] );
         $data = json_decode( $raw, true );
         if ( is_array( $data ) ) {
