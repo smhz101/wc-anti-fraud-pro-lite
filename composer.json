@@ -1,10 +1,16 @@
 {
-    "require-dev": {
-        "wp-coding-standards/wpcs": "^3.2"
-    },
-    "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
+  "name": "smhz101/wc-anti-fraud-pro-lite",
+  "description": "Pre-checkout risk checks for WooCommerce",
+  "type": "wordpress-plugin",
+  "require": {
+    "php": ">=8.0"
+  },
+  "require-dev": {
+    "wp-coding-standards/wpcs": "^3.2"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
     }
+  }
 }

@@ -42,27 +42,34 @@ require_once WCA_PLUGIN_DIR . 'includes/Services/FraudEngine.php';
 require_once WCA_PLUGIN_DIR . 'includes/Services/Telemetry.php';
 require_once WCA_PLUGIN_DIR . 'includes/Services/GatewayFriction.php';
 
-/*
-Hooks */
-// Admin
-add_action( 'admin_menu', 'wca_admin_menu' );
-add_action( 'admin_init', 'wca_admin_init' );
-add_action( 'admin_init', 'wca_handle_tools' );
-add_action( 'admin_enqueue_scripts', 'wca_enqueue_admin_assets' );
-add_action( 'update_option_wca_opts_ext', 'wca_on_settings_updated', 10, 2 );
+/**
+ * Bootstrap after plugins load & only if WooCommerce is present.
+ */
+add_action( 'plugins_loaded', 'wcaf_main_loader' );
+function wcaf_main_loader() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
 
-// Import/Export
-add_action( 'admin_post_wca_export', 'wca_export_settings' );
-add_action( 'admin_post_wca_import', 'wca_import_settings' );
+	add_action( 'admin_menu', 'wca_admin_menu' );
+	add_action( 'admin_init', 'wca_admin_init' );
+	add_action( 'admin_init', 'wca_handle_tools' );
+	add_action( 'admin_enqueue_scripts', 'wca_enqueue_admin_assets' );
+	add_action( 'update_option_wca_opts_ext', 'wca_on_settings_updated', 10, 2 );
 
-// Frontend
-add_action( 'woocommerce_init', 'wca_wc_init' );
-add_action( 'wp', 'wca_set_first_seen_cookie' );
-add_action( 'woocommerce_after_checkout_billing_form', 'wca_checkout_fields' );
-add_action( 'woocommerce_after_checkout_validation', 'wca_validate_checkout', 10, 2 );
-add_action( 'woocommerce_checkout_create_order', 'wca_on_create_order', 10, 2 );
-add_filter( 'woocommerce_available_payment_gateways', 'wca_filter_gateways', 20 );
-add_action( 'admin_notices', 'wca_admin_notice_tip' );
+	// Import/Export
+	add_action( 'admin_post_wca_export', 'wca_export_settings' );
+	add_action( 'admin_post_wca_import', 'wca_import_settings' );
+
+	// Frontend
+	add_action( 'woocommerce_init', 'wca_wc_init' );
+	add_action( 'wp', 'wca_set_first_seen_cookie' );
+	add_action( 'woocommerce_after_checkout_billing_form', 'wca_checkout_fields' );
+	add_action( 'woocommerce_after_checkout_validation', 'wca_validate_checkout', 10, 2 );
+	add_action( 'woocommerce_checkout_create_order', 'wca_on_create_order', 10, 2 );
+	add_filter( 'woocommerce_available_payment_gateways', 'wca_filter_gateways', 20 );
+	add_action( 'admin_notices', 'wca_admin_notice_tip' );
+}
 
 /**
  * Declare compatibility with Woo features (HPOS, COGS, etc.).
