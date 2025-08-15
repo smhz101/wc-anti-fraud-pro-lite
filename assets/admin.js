@@ -261,6 +261,24 @@
   }
 
   /* -----------------------------
+   * Toggle field dependencies
+   * --------------------------- */
+  function wcaToggleDependencies() {
+    $('.wca-field[data-depends]').each(function () {
+      var $field = $(this);
+      var dep = $field.data('depends');
+      var $input = $('input[name="wca_opts_ext[' + dep + ']"]');
+      if (!$input.length) return;
+      $field.toggle($input.is(':checked'));
+    });
+  }
+
+  function wcaInitDependencies() {
+    wcaToggleDependencies();
+    $(document).on('change', 'input[type="checkbox"]', wcaToggleDependencies);
+  }
+
+  /* -----------------------------
    * Vertical navigation (persist search)
    * --------------------------- */
   function wcaInitVertNav() {
@@ -355,6 +373,7 @@
       wcaInitProductSelect();
       wcaBindPreviewTriggers();
       wcaUpdateCartPreview();
+      wcaInitDependencies();
     }
     if ($('.wca-dashboard').length) {
       wcaInitDashboard();
