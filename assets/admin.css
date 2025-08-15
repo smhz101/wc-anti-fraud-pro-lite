@@ -95,24 +95,31 @@
         width: 200px;
         list-style: none;
         margin: 0;
-        padding: 0;
+       padding: 0;
 }
 .wca-vert-nav li {
         margin-bottom: 4px;
 }
 .wca-vert-nav a {
-        display: block;
-        padding: 8px 10px;
-        border: 1px solid #d0d5da;
-        border-radius: 4px;
-        background: #f0f0f0;
-        text-decoration: none;
-        color: #1d2327;
+       display: block;
+       padding: 12px 16px;
+       border: 1px solid #d0d5da;
+       border-radius: 4px;
+       background: #f0f0f0;
+       text-decoration: none;
+       color: #1d2327;
+       font-size: 14px;
+       font-weight: 500;
 }
-.wca-vert-nav li.active a,
 .wca-vert-nav a:hover {
-        background: #fff;
-        font-weight: 600;
+       background: #fff;
+}
+.wca-vert-nav li.active a {
+       background: #fff;
+       font-weight: 600;
+       color: #0a4b78;
+       border-left: 4px solid #2271b1;
+       padding-left: 12px;
 }
 .wca-settings-form {
         flex: 1;
@@ -136,11 +143,12 @@
 	gap: 14px;
 }
 .wca-card {
-	grid-column: span 6;
-	background: #fff;
-	border: 1px solid #e4e6eb;
-	border-radius: 10px;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+        grid-column: span 6;
+        background: #fff;
+        border: 1px solid #e4e6eb;
+       border-radius: 10px;
+       box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+       padding: 0;
 }
 @media (max-width: 1024px) {
 	.wca-card {
@@ -148,16 +156,15 @@
 	}
 }
 .wca-card-h {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 12px 14px;
-	border-bottom: 1px solid #eef0f3;
-}
-.wca-card-h h3 {
-	margin: 0;
-	font-size: 14px;
-	font-weight: 600;
+       display: flex;
+       align-items: center;
+       justify-content: space-between;
+       padding: 16px 20px;
+       border-bottom: 1px solid #eef0f3;
+       font-size: 16px;
+       font-weight: 600;
+       margin: 0;
+       width: 100%;
 }
 .wca-help {
 	width: 28px;
@@ -171,7 +178,7 @@
 	justify-content: center;
 }
 .wca-card-b {
-	padding: 14px;
+       padding: 20px;
 }
 
 /* Inputs */
